@@ -14,3 +14,5 @@ export * from './terms-and-conditions.js';
 export * from './proforma-invoices.js';
 export * from './production-orders.js';
 export * from './commercial-invoices.js';
+export * from './receipts.js';
+export * from './orders-and-lots.js';

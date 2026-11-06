@@ -204,4 +204,146 @@ describe('SalesService & Core Business Rules', () => {
       expect(po.documentNumber).toBe('RMM/1');
     });
   });
+
+  describe('Commercial Invoice & Packing List Creation', () => {
+    it('should calculate CIF total including freight, insurance, and amount in words', async () => {
+      const result = await service.createCommercialInvoice(
+        'co-rmm-1',
+        'RMM',
+        {
+          documentDate: '2026-11-08',
+          customerId: 'cust-1',
+          portOfLoading: 'Mundra Port, India',
+          portOfDischarge: 'Jebel Ali, UAE',
+          countryOfDestination: 'United Arab Emirates',
+          incoterm: 'CIF',
+          currency: 'USD',
+          items: [
+            {
+              productId: 'prod-1',
+              packingTypeId: 'pack-1',
+              quantityMt: 50.0,
+              ratePerMt: 1000.0, // FOB: $50,000.00
+            },
+          ],
+          shippingCharges: {
+            thcCharge: 200.0,
+            blCharge: 50.0,
+            sealCharge: 15.0,
+            mucCharge: 25.0,
+            riskCharge: 10.0,
+            repositionCharge: 100.0,
+            oceanFreightCharge: 1500.0,
+            insuranceCharge: 100.0,
+          },
+          containers: [
+            {
+              containerNumber: 'MSCU9876543',
+              sealNumber: 'SEAL1234',
+              containerSize: '20FT',
+              totalBags: 1000,
+              grossWeightKg: 25150.0,
+              netWeightKg: 25000.0,
+            },
+          ],
+        },
+        'usr-1',
+        'admin',
+      );
+
+      // FOB = 50,000.00
+      expect(result.totalFobAmount).toBe('50000.00');
+      // Ocean freight = 1500.00
+      expect(result.oceanFreightAmount).toBe('1500.00');
+      // Insurance = 100.00
+      expect(result.insuranceAmount).toBe('100.00');
+      // Total = 50000 + 1500 + 100 = 51600.00
+      expect(result.totalInvoiceAmount).toBe('51600.00');
+      // Amount in words
+      expect(result.amountInWords).toContain('Fifty-One Thousand Six Hundred Only');
+    });
+
+    it('should reject Commercial Invoice if total quantity exceeds production order balance', async () => {
+      const mockPo = {
+        id: 'po-1',
+        totalQuantityMt: '50.000',
+        allocatedInvoiceMt: '40.000', // 10 MT remaining
+      };
+
+      const mockDb = {
+        transaction: vi.fn(async (cb) => {
+          const tx = {
+            select: () => ({
+              from: () => ({
+                where: () => ({
+                  for: vi.fn().mockResolvedValue([mockPo]),
+                }),
+              }),
+            }),
+            update: () => ({ set: () => ({ where: vi.fn() }) }),
+            insert: () => ({ values: () => ({ returning: vi.fn() }) }),
+          };
+          return cb(tx);
+        }),
+      };
+
+      const validatingService = new SalesService(
+        { isConnected: true, db: mockDb as any } as any,
+        mockNumberingService,
+        mockActivityLogService,
+      );
+
+      // Attempting to invoice 15 MT when only 10 MT remains on the PO
+      await expect(
+        validatingService.createCommercialInvoice(
+          'co-rmm-1',
+          'RMM',
+          {
+            documentDate: '2026-11-08',
+            productionOrderId: 'po-1',
+            customerId: 'cust-1',
+            portOfLoading: 'Mundra',
+            portOfDischarge: 'Jebel Ali',
+            countryOfDestination: 'UAE',
+            incoterm: 'FOB',
+            items: [
+              {
+                productId: 'prod-1',
+                packingTypeId: 'pack-1',
+                quantityMt: 15.0, // Exceeds remaining 10 MT!
+                ratePerMt: 950.0,
+              },
+            ],
+          },
+          'usr-1',
+          'admin',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('Payment Receipts', () => {
+    it('should create payment receipt against commercial invoice in mock mode', async () => {
+      const result = await service.createReceipt(
+        'co-rmm-1',
+        'RMM',
+        {
+          receiptDate: '2026-11-10',
+          commercialInvoiceId: 'inv-1',
+          customerId: 'cust-1',
+          amountReceived: 51600.0,
+          currency: 'USD',
+          paymentMode: 'WIRE_TRANSFER',
+          referenceNumber: 'SWIFT-998877',
+        },
+        'usr-1',
+        'admin',
+      );
+
+      expect(result.amountReceived).toBe('51600.00');
+      expect(result.currency).toBe('USD');
+      expect(result.paymentMode).toBe('WIRE_TRANSFER');
+      expect(result.referenceNumber).toBe('SWIFT-998877');
+    });
+  });
 });

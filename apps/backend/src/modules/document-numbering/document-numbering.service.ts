@@ -6,7 +6,8 @@ import { documentCounters } from '../../database/schema/document-counters.js';
 export type DocumentType =
   | 'PROFORMA'
   | 'PRODUCTION_ORDER'
-  | 'COMMERCIAL_INVOICE';
+  | 'COMMERCIAL_INVOICE'
+  | 'RECEIPT';
 
 export interface NextNumberResult {
   documentNumber: string;
@@ -48,6 +49,8 @@ export function formatDocumentNumber(
       return `${code}/${sequence}`;
     case 'COMMERCIAL_INVOICE':
       return `${code}/EX/${financialYear}/${sequence}`;
+    case 'RECEIPT':
+      return `REC-${code}/${financialYear}/${sequence}`;
     default: {
       const unsupported: never = docType;
       throw new Error(`Unsupported document type: ${String(unsupported)}`);
@@ -72,7 +75,9 @@ export class DocumentNumberingService {
     date: Date = new Date(),
   ): Promise<NextNumberResult> {
     const fy =
-      docType === 'COMMERCIAL_INVOICE' ? computeFinancialYear(date) : 'PERPETUAL';
+      docType === 'COMMERCIAL_INVOICE' || docType === 'RECEIPT'
+        ? computeFinancialYear(date)
+        : 'PERPETUAL';
 
     if (!this.databaseService.isConnected) {
       // In-memory prediction for offline/mock environments
@@ -119,7 +124,9 @@ export class DocumentNumberingService {
     date: Date = new Date(),
   ): Promise<NextNumberResult> {
     const fy =
-      docType === 'COMMERCIAL_INVOICE' ? computeFinancialYear(date) : 'PERPETUAL';
+      docType === 'COMMERCIAL_INVOICE' || docType === 'RECEIPT'
+        ? computeFinancialYear(date)
+        : 'PERPETUAL';
 
     if (!this.databaseService.isConnected) {
       const nextSeq = 1;
