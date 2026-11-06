@@ -7,7 +7,8 @@ export type DocumentType =
   | 'PROFORMA'
   | 'PRODUCTION_ORDER'
   | 'COMMERCIAL_INVOICE'
-  | 'RECEIPT';
+  | 'RECEIPT'
+  | 'MASTER_ORDER';
 
 export interface NextNumberResult {
   documentNumber: string;
@@ -51,6 +52,8 @@ export function formatDocumentNumber(
       return `${code}/EX/${financialYear}/${sequence}`;
     case 'RECEIPT':
       return `REC-${code}/${financialYear}/${sequence}`;
+    case 'MASTER_ORDER':
+      return `ORD-${code}/${financialYear}/${sequence}`;
     default: {
       const unsupported: never = docType;
       throw new Error(`Unsupported document type: ${String(unsupported)}`);
@@ -75,7 +78,9 @@ export class DocumentNumberingService {
     date: Date = new Date(),
   ): Promise<NextNumberResult> {
     const fy =
-      docType === 'COMMERCIAL_INVOICE' || docType === 'RECEIPT'
+      docType === 'COMMERCIAL_INVOICE' ||
+      docType === 'RECEIPT' ||
+      docType === 'MASTER_ORDER'
         ? computeFinancialYear(date)
         : 'PERPETUAL';
 
@@ -124,7 +129,9 @@ export class DocumentNumberingService {
     date: Date = new Date(),
   ): Promise<NextNumberResult> {
     const fy =
-      docType === 'COMMERCIAL_INVOICE' || docType === 'RECEIPT'
+      docType === 'COMMERCIAL_INVOICE' ||
+      docType === 'RECEIPT' ||
+      docType === 'MASTER_ORDER'
         ? computeFinancialYear(date)
         : 'PERPETUAL';
 

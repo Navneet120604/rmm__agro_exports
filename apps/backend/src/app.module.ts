@@ -11,6 +11,7 @@ import { DocumentNumberingModule } from './modules/document-numbering/document-n
 import { HealthModule } from './modules/health/health.module.js';
 import { MasterDataModule } from './modules/master-data/master-data.module.js';
 import { SalesModule } from './modules/sales/sales.module.js';
+import { DocumentHubModule } from './modules/document-hub/document-hub.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -35,6 +36,7 @@ const isObserveConfigured = Boolean(
     DocumentNumberingModule,
     MasterDataModule,
     SalesModule,
+    DocumentHubModule,
     ObserveModule.forRoot({
       appKey: isObserveConfigured ? observeAppKey : undefined,
       appSecret: isObserveConfigured ? observeAppSecret : undefined,
