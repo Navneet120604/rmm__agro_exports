@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { DatabaseService } from '../../database/database.service.js';
 
 export interface LivenessStatus {
   status: 'ok';
@@ -24,6 +25,8 @@ export class HealthService {
   private readonly version = '0.0.1';
   private readonly serviceName = 'rmm-agro-exports-backend';
 
+  constructor(@Optional() private readonly databaseService?: DatabaseService) {}
+
   checkLiveness(): LivenessStatus {
     return {
       status: 'ok',
@@ -36,13 +39,19 @@ export class HealthService {
 
   checkReadiness(): ReadinessStatus {
     const memory = process.memoryUsage();
+    const dbConnected = this.databaseService?.isConnected;
+
     return {
       status: 'ok',
       service: this.serviceName,
       timestamp: new Date().toISOString(),
       checks: {
         system: 'up',
-        database: process.env.DATABASE_URL ? 'connected' : 'unconfigured',
+        database: dbConnected
+          ? 'connected'
+          : process.env.DATABASE_URL
+            ? 'disconnected'
+            : 'unconfigured',
         memoryUsageMB: Math.round(memory.heapUsed / 1024 / 1024),
       },
     };

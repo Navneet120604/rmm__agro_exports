@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule, ObserveInstrument } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter.js';
@@ -25,6 +26,11 @@ async function bootstrap() {
       },
       crossOriginEmbedderPolicy: false,
     }),
+  );
+
+  // Parse cookies
+  app.use(
+    cookieParser(process.env.COOKIE_SECRET || 'exportfly-dev-cookie-secret'),
   );
 
   // CORS configuration

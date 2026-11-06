@@ -5,3 +5,5 @@ allowBuilds:
   '@scarf/scarf': false
   sharp: false
   unrs-resolver: false
+  argon2: true
+  esbuild: true
