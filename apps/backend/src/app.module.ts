@@ -10,6 +10,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { DocumentNumberingModule } from './modules/document-numbering/document-numbering.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MasterDataModule } from './modules/master-data/master-data.module.js';
+import { SalesModule } from './modules/sales/sales.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -33,6 +34,7 @@ const isObserveConfigured = Boolean(
     AuthModule,
     DocumentNumberingModule,
     MasterDataModule,
+    SalesModule,
     ObserveModule.forRoot({
       appKey: isObserveConfigured ? observeAppKey : undefined,
       appSecret: isObserveConfigured ? observeAppSecret : undefined,
