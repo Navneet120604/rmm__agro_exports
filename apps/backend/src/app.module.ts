@@ -3,6 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { ActivityLogModule } from './modules/activity-log/activity-log.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { CompaniesModule } from './modules/companies/companies.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { DocumentNumberingModule } from './modules/document-numbering/document-numbering.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -24,6 +27,9 @@ const isObserveConfigured = Boolean(
       isGlobal: true,
     }),
     DatabaseModule,
+    ActivityLogModule,
+    CompaniesModule,
+    AuthModule,
     DocumentNumberingModule,
     ObserveModule.forRoot({
       appKey: isObserveConfigured ? observeAppKey : undefined,
