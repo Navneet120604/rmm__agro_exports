@@ -101,6 +101,34 @@ const commercial: FieldDef[] = [
   { name: 'paymentTerms', label: 'Payment terms (printed)', type: 'textarea', span: 2, help: 'Filled from the payment term master; edit for this document' },
 ];
 
+/** Pre-carriage mode: ROAD / RAIL listed in the box; any other mode can be typed. */
+const preCarriageBy: FieldDef = {
+  name: 'preCarriageBy',
+  label: 'Pre-carriage by',
+  type: 'text',
+  upper: true,
+  maxLength: 64,
+  choices: ['ROAD', 'RAIL'],
+  help: 'Set from the place of pre-receipt (ICD → RAIL, Mundra / Kandla → ROAD); change it or type any other',
+};
+
+/**
+ * Default pre-carriage for a place of pre-receipt: an ICD goes by RAIL, Mundra / Kandla by ROAD.
+ * Null when the place says nothing (a typed place we do not know).
+ */
+export function preCarriageFor(place: unknown): 'ROAD' | 'RAIL' | null {
+  const p = String(place ?? '').trim().toUpperCase();
+  if (/^ICD\b/.test(p)) return 'RAIL';
+  if (/\b(MUNDRA|KANDLA)\b/.test(p)) return 'ROAD';
+  return null;
+}
+
+/** The place of pre-receipt may replace the pre-carriage only while it is blank or one of the standard modes. */
+export function preCarriageReplaceable(current: unknown): boolean {
+  const c = String(current ?? '').trim().toUpperCase();
+  return c === '' || c === 'ROAD' || c === 'RAIL' || c === 'TRAIN';
+}
+
 /** Common places of pre-receipt are listed in the box; any other place can be typed. */
 const placeOfPreReceipt: FieldDef = {
   name: 'placeOfPreReceipt',
@@ -261,7 +289,7 @@ export const DOC_LIST: DocDef[] = [
       { name: 'freightAmount', label: 'Freight', type: 'decimal', precision: 15, scale: 2, default: 0 },
       { name: 'insuranceAmount', label: 'Insurance', type: 'decimal', precision: 15, scale: 2, default: 0 },
       ...shippingRoute,
-      { name: 'preCarriageBy', label: 'Pre-carriage by', type: 'select', options: ['ROAD', 'TRAIN'] },
+      preCarriageBy,
       placeOfPreReceipt,
       { name: 'placeOfReceipt', label: 'Place of receipt', type: 'text', maxLength: 128 },
       { name: 'vesselFlightNo', label: 'Vessel / flight no.', type: 'text', maxLength: 128 },
@@ -319,7 +347,7 @@ export const DOC_LIST: DocDef[] = [
       ...commercial,
       { name: 'lutNumber', label: 'LUT / bond no.', type: 'text', upper: true, maxLength: 64, hidden: true },
       ...shippingRoute.map((f) => (f.name === 'finalDestination' ? { ...f, hidden: true } : f)),
-      { name: 'preCarriageBy', label: 'Pre-carriage by', type: 'select', options: ['ROAD', 'TRAIN'] },
+      preCarriageBy,
       placeOfPreReceipt,
       { name: 'containerTypeId', label: 'Container type (said to contain)', type: 'ref', ref: 'containerTypes', allowCreate: true, help: 'Printed as "<no. of containers> X <type> SAID TO CONTAIN"' },
       { name: 'noOfContainers', label: 'No. of containers', type: 'integer', help: "Auto-filled from each packing's container load and net weight — change it if the count should differ" },

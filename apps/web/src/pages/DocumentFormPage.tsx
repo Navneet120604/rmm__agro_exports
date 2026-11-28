@@ -11,6 +11,8 @@ import {
   isPositive,
   lineAmount,
   mul,
+  preCarriageFor,
+  preCarriageReplaceable,
   round,
   statusLabel,
   VALUE_SUMMARY_FIELDS,
@@ -282,6 +284,11 @@ function DocumentForm({ def, id, from, shipment, intake }: { def: DocDef; id: st
     if (name === 'buyerId') void applyBuyer(v as string | null);
     if (name === 'currencyId') void applyCurrency(v as string | null, l ?? null);
     if (name === 'paymentTermId') void applyPaymentTerm(v as string | null);
+    if (name === 'placeOfPreReceipt' && def.header.some((f) => f.name === 'preCarriageBy')) {
+      // ICD → RAIL, Mundra / Kandla → ROAD; a mode typed by hand is left alone
+      const mode = preCarriageFor(v);
+      if (mode) setHeader((s) => (preCarriageReplaceable(s.preCarriageBy) && s.preCarriageBy !== mode ? { ...s, preCarriageBy: mode } : s));
+    }
     if (isNew && def.parent && name === def.parent.field && v) {
       // generate against the chosen parent: reload the draft with its remaining quantities
       navigate(`/d/${def.key}/new?from=${v}`, { replace: true });

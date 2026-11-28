@@ -26,6 +26,7 @@ import {
   lineAmount,
   mul,
   PI_REPORT_FIELDS,
+  preCarriageFor,
   round,
   sub,
   type DocDef,
@@ -125,6 +126,9 @@ function parsePayload(def: DocDef, body: unknown) {
   };
   clearText(def.header, parsed.header as Row);
   for (const l of parsed.lines as Row[]) clearText(def.lines, l);
+  // A blank pre-carriage follows the place of pre-receipt (ICD → RAIL, Mundra / Kandla → ROAD).
+  const h = parsed.header as Row;
+  if (def.header.some((f) => f.name === 'preCarriageBy') && !h.preCarriageBy) h.preCarriageBy = preCarriageFor(h.placeOfPreReceipt) ?? h.preCarriageBy ?? null;
   if (!def.containers) parsed.containers = [];
   return parsed as { header: Row; lines: Row[]; terms: { tcTemplateId?: string | null; content: string }[]; containers: Row[]; version?: number };
 }
